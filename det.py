@@ -5,6 +5,7 @@ import cv2
 import numpy as np
 import time
 import signal
+import skimage.measure as measure
 
 
 TRESHOLD = 5
@@ -36,8 +37,10 @@ def main():
         ret, bw = cv2.threshold(gray, TRESHOLD, 255, cv2.THRESH_BINARY)
         assert ret
 
-        #ctr += (gray > 5).sum()
-        ctr += np.count_nonzero(frame[:, :] > TRESHOLD)
+        labels, count = measure.label(bw, return_num=True)
+        ctr += count
+        ##ctr += (gray > 5).sum()
+        #ctr += np.count_nonzero(frame[:, :] > TRESHOLD)
         new_time = time.time()
         print ctr, "fps=%.2f" % (1/(new_time - prev_time))
         prev_time = new_time
