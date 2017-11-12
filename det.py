@@ -40,7 +40,7 @@ def check_nonnegative(value):
 
 def check_uint8(value):
     ivalue = int(value)
-    if not (0 <= value <= 255):
+    if not (0 <= ivalue <= 255):
         raise argparse.ArgumentTypeError(
             "%s is an invalid uint8 value" % value)
     return ivalue
