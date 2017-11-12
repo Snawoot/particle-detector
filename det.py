@@ -31,7 +31,7 @@ def autocrop(image, labels, label):
 
 def check_positive(value):
     ivalue = int(value)
-    if ivalue < 0:
+    if ivalue <= 0:
         raise argparse.ArgumentTypeError(
             "%s is an invalid positive int value" % value)
     return ivalue
@@ -39,9 +39,17 @@ def check_positive(value):
 
 def check_nonnegative(value):
     ivalue = int(value)
-    if ivalue <= 0:
+    if ivalue < 0:
         raise argparse.ArgumentTypeError(
             "%s is an invalid non-negative int value" % value)
+    return ivalue
+
+
+def check_uint8(value):
+    ivalue = int(value)
+    if not (0 <= value <= 255):
+        raise argparse.ArgumentTypeError(
+            "%s is an invalid uint8 value" % value)
     return ivalue
 
 
@@ -71,7 +79,7 @@ def processing_loop(vc, logger, params):
 
         # Frame preprocessing
         gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
-        blurred = cv2.GaussianBlur(gray, gaussian_ksize, 0)
+        blurred = cv2.GaussianBlur(gray, gaussian_ksize, 0) if params.blur_radius else gray
         ret, bw = cv2.threshold(blurred, TRESHOLD, 255, cv2.THRESH_BINARY)
         assert ret
 
@@ -135,6 +143,16 @@ def parse_args():
                         "--full-frames",
                         action='store_true',
                         help="also save full original frames")
+    parser.add_argument("-t",
+                        "--treshold",
+                        help="treshold [0-255]",
+                        type=check_uint8,
+                        default=5)
+    parser.add_argument("-R",
+                        "--blur-radius",
+                        help="gaussian blur radius",
+                        type=check_nonnegative,
+                        default=5)
     return parser.parse_args()
 
 
