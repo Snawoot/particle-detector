@@ -11,13 +11,6 @@ import argparse
 import os.path
 
 
-TRESHOLD = 5
-BLUR_RADIUS = 5
-
-
-gaussian_ksize = ((BLUR_RADIUS|1),) * 2
-
-
 def autocrop(image, labels, label):
     rows = np.where(np.any(labels == label, 0))[0]
     if rows.size:
@@ -70,6 +63,7 @@ def processing_loop(vc, logger, params):
     ctr = 0
     start_time = time.time()
     prev_time = start_time
+    gaussian_ksize = ((params.blur_radius|1),) * 2
 
     while True:
         rval, frame = vc.read()
@@ -80,7 +74,7 @@ def processing_loop(vc, logger, params):
         # Frame preprocessing
         gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
         blurred = cv2.GaussianBlur(gray, gaussian_ksize, 0) if params.blur_radius else gray
-        ret, bw = cv2.threshold(blurred, TRESHOLD, 255, cv2.THRESH_BINARY)
+        ret, bw = cv2.threshold(blurred, params.treshold, 255, cv2.THRESH_BINARY)
         assert ret
 
         # Frame feature detection
