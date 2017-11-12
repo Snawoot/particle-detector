@@ -8,6 +8,7 @@ import signal
 import skimage.measure as measure
 import logging
 import argparse
+import os.path
 
 
 TRESHOLD = 5
@@ -57,13 +58,13 @@ def exit_handler(signum, frame):
     sys.exit(0)
 
 
-def processing_loop(vc, logger):
+def processing_loop(vc, logger, params):
     ctr = 0
-    out = 0
     prev_time = time.time()
 
     while True:
         rval, frame = vc.read()
+        curr_time = time.time()
         if not rval:
             break
 
@@ -76,22 +77,22 @@ def processing_loop(vc, logger):
         # Frame feature detection
         labels, count = measure.label(bw, return_num=True)
         ctr += count
-        new_time = time.time()
-        logger.debug("count=%d fps=%.2f res=%s", ctr, (1/(new_time - prev_time)), frame.shape[:-1])
-        if count:
-            filename = "out_%.2d.bmp" % (out,)
-            cv2.imwrite(filename, frame)
-            logger.info("wrote file %s with %d particle(s)", repr(filename), count)
+
+        logger.debug("counter=%d fps=%.2f res=%s", ctr, (1/(curr_time - prev_time)), frame.shape[:-1])
+
+        # Output images
+        if count and params.output_directory:
+            namebase = os.path.join(params.output_directory, "out_%f_")
+            if params.full_frames:
+                cv2.imwrite(namebase + "full.bmp", frame)
+                logger.info("wrote file %s with full frame", repr(filename), count)
             for label in np.unique(labels):
                 if label == 0:
                     continue
-                #label_mask = np.zeros_like(frame)
-                #label_mask[labels == label] = (255,) * frame.shape[2]
-                #masked_frame = cv2.bitwise_and(frame, label_mask)
                 cropped_frame = autocrop(frame, labels, label)
-                cv2.imwrite("out_%.2d_%.2d.bmp" % (out, label), cropped_frame)
-            out += 1
-        prev_time = new_time
+                cv2.imwrite(namebase + "%.2d.bmp" % (curr_time, label), cropped_frame)
+            logger.info("wrote file %s with %d particle(s)", repr(filename), count)
+        prev_time = curr_time
 
 
 def parse_args():
@@ -120,6 +121,13 @@ def parse_args():
                         "--debug",
                         action='store_true',
                         help="debug output")
+    parser.add_argument("-o",
+                        "--output-directory",
+                        help="save images into specified directory")
+    parser.add_argument("-F",
+                        "--full-frames",
+                        action='store_true',
+                        help="also save full original frames")
     return parser.parse_args()
 
 
@@ -136,7 +144,7 @@ def main():
     if not vc.isOpened():
         raise Exception("Unable to open camera")
 
-    processing_loop(vc, logger)
+    processing_loop(vc, logger, args)
 
 
 if __name__ == '__main__':
