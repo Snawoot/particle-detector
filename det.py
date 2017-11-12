@@ -82,16 +82,18 @@ def processing_loop(vc, logger, params):
 
         # Output images
         if count and params.output_directory:
-            namebase = os.path.join(params.output_directory, "out_%f_")
+            namebase = os.path.join(params.output_directory, "out_%f_" % (curr_time,))
             if params.full_frames:
-                cv2.imwrite(namebase + "full.bmp", frame)
-                logger.info("wrote file %s with full frame", repr(filename), count)
+                filename = namebase + "full.bmp"
+                cv2.imwrite(filename, frame)
+                logger.debug("wrote file %s with full frame", repr(filename), count)
             for label in np.unique(labels):
                 if label == 0:
                     continue
                 cropped_frame = autocrop(frame, labels, label)
-                cv2.imwrite(namebase + "%.2d.bmp" % (curr_time, label), cropped_frame)
-            logger.info("wrote file %s with %d particle(s)", repr(filename), count)
+                filename = namebase + ("%.2d.bmp" % (label,))
+                cv2.imwrite(filename, cropped_frame)
+                logger.debug("wrote file %s with particle %d", repr(filename), label)
         prev_time = curr_time
 
 
