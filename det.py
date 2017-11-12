@@ -60,7 +60,8 @@ def exit_handler(signum, frame):
 
 def processing_loop(vc, logger, params):
     ctr = 0
-    prev_time = time.time()
+    start_time = time.time()
+    prev_time = start_time
 
     while True:
         rval, frame = vc.read()
@@ -81,19 +82,23 @@ def processing_loop(vc, logger, params):
         logger.debug("counter=%d fps=%.2f res=%s", ctr, (1/(curr_time - prev_time)), frame.shape[:-1])
 
         # Output images
-        if count and params.output_directory:
-            namebase = os.path.join(params.output_directory, "out_%f_" % (curr_time,))
-            if params.full_frames:
-                filename = namebase + "full.bmp"
-                cv2.imwrite(filename, frame)
-                logger.debug("wrote file %s with full frame", repr(filename), count)
-            for label in np.unique(labels):
-                if label == 0:
-                    continue
-                cropped_frame = autocrop(frame, labels, label)
-                filename = namebase + ("%.2d.bmp" % (label,))
-                cv2.imwrite(filename, cropped_frame)
-                logger.debug("wrote file %s with particle %d", repr(filename), label)
+        if count:
+            logger.info("events=%d, total=%d, mean_rate=%.4f events/hr",
+                        count, ctr, ctr / (curr_time - start_time) * 3600)
+            if params.output_directory:
+                namebase = os.path.join(params.output_directory, "out_%f_" % (curr_time,))
+                if params.full_frames:
+                    filename = namebase + "full.bmp"
+                    cv2.imwrite(filename, frame)
+                    logger.debug("wrote file %s with full frame", repr(filename), count)
+                for label in np.unique(labels):
+                    if label == 0:
+                        continue
+                    cropped_frame = autocrop(frame, labels, label)
+                    filename = namebase + ("%.2d.bmp" % (label,))
+                    cv2.imwrite(filename, cropped_frame)
+                    logger.debug("wrote file %s with particle %d", repr(filename), label)
+
         prev_time = curr_time
 
 
