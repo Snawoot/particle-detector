@@ -1,2 +1,3 @@
 opencv-python==2.4.9
 scikit-image
+-e git+https://github.com/gebart/python-v4l2capture.git#egg=v4l2capture
